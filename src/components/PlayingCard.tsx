@@ -1,5 +1,6 @@
 import type { CSSProperties } from 'react'
-import { RANKS, RANK_NAMES, SUIT_NAMES, type Card } from '@/game'
+import { RANKS, type Card } from '@/game'
+import { useT } from '@/i18n'
 
 // 7x7 pixel suits, drawn in code: spades, hearts, clubs, diamonds.
 const BITMAPS = [
@@ -22,11 +23,12 @@ export function Suit({ suit, className }: { suit: number; className?: string }) 
 }
 
 export function PlayingCard({ card, tilt = 0, animate = true }: { card: Card; tilt?: number; animate?: boolean }) {
+  const t = useT()
   const rank = RANKS[card.rank - 1]
   return (
     <div
       role="img"
-      aria-label={`${RANK_NAMES[card.rank - 1]} of ${SUIT_NAMES[card.suit]}`}
+      aria-label={t.card(card.rank, card.suit)}
       className={animate ? 'pcard dealt' : 'pcard'}
       style={{ '--suit': SUIT_COLORS[card.suit], '--tilt': `${tilt}deg` } as CSSProperties}
     >

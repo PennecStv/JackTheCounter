@@ -4,8 +4,6 @@ export type Card = { rank: number; suit: number } // rank 1 (ace) to 13 (king), 
 export type Deal = { card: Card; spot: number } // spot 0-1 = player hands, 2 = dealer
 
 export const RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K']
-export const RANK_NAMES = ['Ace', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine', 'Ten', 'Jack', 'Queen', 'King']
-export const SUIT_NAMES = ['spades', 'hearts', 'clubs', 'diamonds']
 export const DEALER = 2
 export const PENETRATION = 0.75 // the cut card sits 3/4 of the way into the shoe
 export const LIVES = 3
@@ -19,12 +17,8 @@ export const LEVELS = Array.from({ length: 8 }, (_, i) => ({
 // One colour per ante, light green at ante 1 up to the deep red of the last one.
 export const ANTE_COLORS = ['#4bc292', '#56a887', '#009dff', '#646eb7', '#8867a5', '#fda200', '#fe5f55', '#b44430']
 
-// Multiplies every ante's dealing pace.
-export const SPEEDS = [
-  { label: 'Slow', factor: 1.5 },
-  { label: 'Normal', factor: 1 },
-  { label: 'Fast', factor: 0.7 },
-]
+// Deal speed multipliers: at ×3, ante 8 deals a card every 0.19s.
+export const SPEEDS = [0.75, 1, 1.5, 2, 3]
 
 // Value of each rank, ace first as in RANKS. A balanced count adds up to 0 over a deck and is
 // converted to a true count; KO adds up to +4 a deck and is played on the running count alone.
@@ -76,6 +70,28 @@ export function playRound(shoe: Card[], start: number) {
   for (const spot of [0, 1]) while (handTotal(hands[spot]) < 13 && hit(spot));
   if (handTotal(hands[0]) <= 21 || handTotal(hands[1]) <= 21) while (handTotal(hands[DEALER]) < 17 && hit(DEALER));
   return { deals, next: pos }
+}
+
+export type Outcome = 'blackjack' | 'win' | 'push' | 'lose' | 'bust'
+
+// How a fully dealt round ends: each player hand against the dealer, and whether the dealer
+// beat at least one hand or busted.
+export function settle(deals: Deal[]) {
+  const cards = (spot: number) => deals.filter((d) => d.spot === spot).map((d) => d.card)
+  const natural = (hand: Card[]) => hand.length === 2 && handTotal(hand) === 21
+  const dealer = cards(DEALER)
+  const total = handTotal(dealer)
+  const hands = [0, 1].map((spot): Outcome => {
+    const hand = cards(spot)
+    const p = handTotal(hand)
+    if (p > 21) return 'bust'
+    if (natural(hand)) return natural(dealer) ? 'push' : 'blackjack'
+    if (natural(dealer)) return 'lose'
+    if (total > 21 || p > total) return 'win'
+    return p === total ? 'push' : 'lose'
+  })
+  const dealerResult: 'win' | 'bust' | null = total > 21 ? 'bust' : hands.some((o) => o === 'lose' || o === 'bust') ? 'win' : null
+  return { hands, dealer: dealerResult }
 }
 
 // Deals the whole level up front so the UI only replays it. Checkpoints come every few rounds

@@ -8,6 +8,7 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
+    "staging": "tsc -b && vite build --mode staging && vite preview --host --port 4173 --strictPort",
     "test": "node --test test/*.test.ts"
   },
   "dependencies": {

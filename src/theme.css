@@ -115,14 +115,18 @@
 
   /* ---------- play ---------- */
   .play { display: grid; grid-template-rows: auto 1fr; min-height: 100dvh; gap: 12px; padding: 12px; }
+  /* phones: wrapping rows (title + speed, score + lives, buttons); a single grid column from 960px */
   .hud {
-    display: grid; grid-template-columns: 1fr auto; gap: 10px 12px; align-items: center; padding: 14px;
+    display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 12px; align-items: center; padding: 14px;
     box-shadow: inset 0 6px 0 var(--ante), 0 6px 0 rgb(0 0 0 / 0.4);
   }
-  .hud-title { grid-column: 1 / -1; }
+  .hud-speed { display: flex; align-items: center; gap: 6px; justify-self: end; }
+  .hud-speed .btn { font-size: 1.6rem; padding: 0 0.45em; }
+  .hud-speed-value { min-width: 2.4em; text-align: center; font-size: 1.6rem; }
+  .hud-title, .hud-score { flex: 1 1 50%; min-width: 0; }
   .hud-score { display: flex; align-items: center; gap: 8px; }
   .hud-lives { display: flex; gap: 6px; justify-self: end; }
-  .hud-actions { grid-column: 1 / -1; display: flex; gap: 10px; }
+  .hud-actions { flex: 1 1 100%; display: flex; gap: 10px; }
   .hud-actions .btn { flex: 1; font-size: 1.6rem; }
   .life { width: 34px; color: var(--color-mult); }
   .life-lost { color: rgb(0 0 0 / 0.35); }
@@ -134,7 +138,26 @@
   .felt { position: relative; display: grid; align-content: space-evenly; gap: 32px; width: 100%; height: 100%; min-height: 60dvh; }
   .players { display: flex; flex-direction: column; align-items: center; gap: 24px; }
   @media (min-width: 640px) { .players { flex-direction: row; justify-content: center; gap: 6vw; } }
-  .spot { display: grid; justify-items: center; gap: 10px; }
+  .spot { position: relative; display: grid; justify-items: center; gap: 10px; }
+  .skip { justify-self: center; font-size: 1.6rem; }
+
+  /* ---------- who won the round ---------- */
+  .outcome {
+    position: absolute; z-index: 2; top: calc(var(--cw) * -0.3); left: 50%; translate: -50% 0; white-space: nowrap;
+    padding: 0 0.45em; border-radius: 8px; font-size: clamp(1.4rem, 4vw, 2rem); line-height: 1.3;
+    box-shadow: inset 0 -4px 0 rgb(0 0 0 / 0.25), 0 4px 0 rgb(0 0 0 / 0.35);
+    animation: outcome 420ms 250ms cubic-bezier(0.2, 0.9, 0.3, 1.4) both;
+  }
+  .outcome-win { background: var(--color-green); }
+  .outcome-blackjack { background: var(--color-gold); color: var(--color-deep); text-shadow: none; }
+  .outcome-lose { background: var(--color-mult); }
+  .outcome-push { background: var(--color-panel-2); }
+  .spot-win .hand, .spot-blackjack .hand { animation: cheer 650ms 250ms ease-out both; }
+  .spot-win .pcard, .spot-blackjack .pcard {
+    box-shadow: inset 0 0 0 2px #cfd6df, 0 0 0 3px var(--color-gold), 0 5px 0 rgb(0 0 0 / 0.35);
+    transition: box-shadow 150ms 250ms;
+  }
+  .spot-lose .hand { animation: sulk 500ms 250ms ease-in-out both; }
   .hand { display: flex; min-height: calc(var(--cw) * 1.4); }
   .hand .pcard + .pcard { margin-left: calc(var(--cw) * -0.55); }
   .spot-label { font-size: 1.5rem; color: rgb(255 255 255 / 0.8); }
@@ -164,6 +187,7 @@
   .felt.swept .pcard { animation: sweep 420ms cubic-bezier(0.5, 0, 0.9, 0.4) both; }
 
   /* ---------- menu settings and guide links ---------- */
+  .menu-lang { grid-column: 1 / -1; justify-self: end; }
   .menu-nav { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
   .menu-nav .btn { text-align: center; }
   .rules-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px 16px; }
@@ -214,20 +238,46 @@
   .move-P { background: var(--color-green); }
   .move-R { background: #8867a5; }
 
+  /* ---------- recap of past rounds ---------- */
+  .recap {
+    --cw: 38px; width: min(760px, calc(100% - 24px)); max-height: 86dvh; overflow-y: auto; margin: auto;
+    color: #fff; background: var(--color-panel); padding: 0 clamp(12px, 3vw, 20px) 20px;
+  }
+  .recap::backdrop { background: rgb(0 0 0 / 0.65); }
+  .recap-head {
+    position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 16px 0 12px; background: var(--color-panel);
+  }
+  .recap h2 { font-size: 2.4rem; line-height: 1; }
+  .recap-head .btn { font-size: 1.6rem; }
+  .recap-list { display: grid; gap: 10px; }
+  .recap-round { display: grid; gap: 8px; background: rgb(0 0 0 / 0.18); border-radius: 10px; padding: 10px 12px; }
+  .recap-round-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
+  .recap-round h3 { font-size: 1.7rem; line-height: 1; color: var(--color-gold); }
+  .recap-round p { font-size: 1.3rem; color: rgb(255 255 255 / 0.85); }
+  .recap-hands { display: flex; flex-wrap: wrap; gap: 8px 22px; }
+  .recap-hand { display: grid; gap: 4px; }
+  .recap-spot { font-size: 1.2rem; color: rgb(255 255 255 / 0.7); }
+  .recap-cards { display: flex; gap: 4px; }
+  .recap-card { display: grid; justify-items: center; gap: 3px; }
+  .recap-card .pcard { box-shadow: inset 0 0 0 2px #cfd6df; }
+  .recap-value { min-width: 100%; border-radius: 4px; text-align: center; font-size: 1.1rem; line-height: 1.3; }
+
   .pop { animation: pop 260ms ease-out; }
   .shake { animation: shake 360ms ease-in-out; }
 
   @media (min-width: 960px) {
     .menu { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; gap: 40px; padding: 48px 32px; }
     .play { grid-template-columns: 320px 1fr; grid-template-rows: none; gap: 24px; padding: 24px; }
-    .hud { grid-template-columns: 1fr; align-content: start; gap: 24px; padding: 24px; }
-    .hud-lives { justify-self: start; }
+    .hud { display: grid; grid-template-columns: 1fr; align-content: start; gap: 24px; padding: 24px; }
+    .hud-lives, .hud-speed { justify-self: start; }
     .hud-rules { display: grid; }
   }
 
   @media (prefers-reduced-motion: reduce) {
     .pcard.dealt, .wordmark span, .pop, .shake { animation: none; }
     .felt.swept .pcard { animation: none; opacity: 0; }
+    .outcome, .spot-win .hand, .spot-blackjack .hand, .spot-lose .hand { animation: none; }
     .btn, .tray-fill { transition: none; }
   }
 }
@@ -237,6 +287,21 @@
   to { transform: rotate(var(--tilt)); }
 }
 @keyframes sweep { to { transform: translate(60vw, -15vh) rotate(35deg) scale(0.5); opacity: 0; } }
+@keyframes outcome {
+  from { transform: scale(0) rotate(-20deg); }
+  70% { transform: scale(1.15) rotate(4deg); }
+  to { transform: scale(1) rotate(-3deg); }
+}
+@keyframes cheer {
+  30% { transform: translateY(-16px) scale(1.05); }
+  60% { transform: translateY(0) scale(1); }
+  80% { transform: translateY(-5px); }
+}
+@keyframes sulk {
+  20%, 60% { transform: translateX(-6px) rotate(-2deg); }
+  40%, 80% { transform: translateX(6px) rotate(2deg); }
+  to { opacity: 0.55; filter: grayscale(0.6); }
+}
 @keyframes bob { 50% { transform: translateY(-6px) rotate(-1.5deg); } }
 @keyframes pop { 40% { transform: scale(1.25) rotate(-4deg); } }
 @keyframes shake {

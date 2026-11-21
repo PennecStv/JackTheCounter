@@ -3,11 +3,12 @@ import { PlayingCard, Suit } from '@/components/PlayingCard'
 import { Swirl } from '@/components/Swirl'
 import { ANTE_COLORS, LEVELS, SPEEDS, SYSTEMS, signed, valueGroups, valueTone, type SystemId } from '@/game'
 import { Bible, Charts, Rules } from '@/Guides'
+import { LANGS, LangContext, STRINGS, browserLang, type Lang } from '@/i18n'
 import { Play } from '@/Play'
 import { unlockAudio } from '@/sound'
 
 type Progress = { stars: number[]; best: number[] }
-type Settings = { system: SystemId; speed: number; sound: boolean }
+type Settings = { system: SystemId; speed: number; sound: boolean; lang: Lang }
 const KEY = 'jack-the-counter'
 const SYSTEM_IDS = Object.keys(SYSTEMS) as SystemId[]
 
@@ -27,26 +28,22 @@ function loadSettings(): Settings {
     const s = JSON.parse(localStorage.getItem(`${KEY}/settings`) ?? '')
     return {
       system: Object.hasOwn(SYSTEMS, s.system) ? s.system : 'hilo',
-      speed: SPEEDS.some((x) => x.factor === s.speed) ? s.speed : 1,
+      speed: SPEEDS.includes(s.speed) ? s.speed : 1,
       sound: s.sound !== false,
+      lang: Object.hasOwn(STRINGS, s.lang) ? s.lang : browserLang(),
     }
   } catch {
-    return { system: 'hilo', speed: 1, sound: true }
+    return { system: 'hilo', speed: 1, sound: true, lang: browserLang() }
   }
 }
 
-const NOTES: Record<SystemId, string> = {
-  hilo: 'Add each card’s value as it hits the table: that total is the running count. From ante 2, divide it by the decks left in the shoe to get the true count.',
-  ko: 'Hi-Lo with sevens at +1, so a full deck adds up to +4. That imbalance replaces the true count: every check asks for the running count only, starting from 0.',
-  omega: 'A level-two count: fours to sixes are worth +2, tens −2 and aces 0. From ante 2, divide the running count by the decks left to get the true count.',
-}
-
 // Guide pages live at #rules, #charts and #bible so the phone's back button returns to the menu.
-const GUIDES: Record<string, { label: string; title: string; color: string; Page: () => ReactNode }> = {
-  '#rules': { label: 'Rules', title: 'Blackjack rules', color: '#4bc292', Page: Rules },
-  '#charts': { label: 'Charts', title: 'Strategy charts', color: '#009dff', Page: Charts },
-  '#bible': { label: 'Bible', title: 'The counter’s bible', color: '#fda200', Page: Bible },
+const GUIDES = {
+  rules: { color: '#4bc292', Page: Rules },
+  charts: { color: '#009dff', Page: Charts },
+  bible: { color: '#fda200', Page: Bible },
 }
+type GuideId = keyof typeof GUIDES
 const onHashChange = (cb: () => void) => {
   addEventListener('hashchange', cb)
   return () => removeEventListener('hashchange', cb)
@@ -59,12 +56,17 @@ export default function App() {
   const [progress, setProgress] = useState(() => load(settings.system))
   const [level, setLevel] = useState<number | null>(null)
   const [run, setRun] = useState(0)
-  const hash = useSyncExternalStore(onHashChange, () => location.hash)
-  const unlocked = (i: number) => i === 0 || progress.stars[i - 1] > 0
+  const hash = useSyncExternalStore(onHashChange, () => location.hash.slice(1))
+  const t = STRINGS[settings.lang]
+  // The staging build (npm run staging) opens every ante so testers can see them all.
+  const unlocked = (i: number) => import.meta.env.MODE === 'staging' || i === 0 || progress.stars[i - 1] > 0
 
   useEffect(() => {
     scrollTo(0, 0)
   }, [hash, level])
+  useEffect(() => {
+    document.documentElement.lang = settings.lang
+  }, [settings.lang])
 
   function update(patch: Partial<Settings>) {
     const next = { ...settings, ...patch }
@@ -90,47 +92,54 @@ export default function App() {
     setRun((r) => r + 1)
   }
 
+  const wrap = (screen: ReactNode) => <LangContext value={t}>{screen}</LangContext>
+
   if (level !== null)
-    return (
+    return wrap(
       <>
         <Swirl colors={[ANTE_COLORS[level], '#1e2a2c', '#4f6367']} />
         <Play
           key={run}
           level={level}
           {...settings}
+          onSpeed={(speed) => update({ speed })}
           onWin={(stars, score) => saveWin(level, stars, score)}
           onExit={() => setLevel(null)}
           onRetry={() => start(level)}
           onNext={level < LEVELS.length - 1 ? () => start(level + 1) : undefined}
         />
-      </>
+      </>,
     )
 
-  const guide = GUIDES[hash]
-  if (guide)
-    return (
+  if (Object.hasOwn(GUIDES, hash)) {
+    const guide = GUIDES[hash as GuideId]
+    return wrap(
       <>
         <Swirl colors={[guide.color, '#1e2a2c', '#4f6367']} />
         <div className="guide" style={{ '--accent': guide.color } as CSSProperties}>
           <header className="guide-head">
-            <h1>{guide.title}</h1>
+            <h1>{t.guides[hash as GuideId].title}</h1>
             <a className="btn bg-mult" href="#">
-              Menu
+              {t.menu}
             </a>
           </header>
           <guide.Page />
           <a className="btn bg-mult justify-self-start" href="#">
-            Back to menu
+            {t.backToMenu}
           </a>
         </div>
-      </>
+      </>,
     )
+  }
 
   const system = SYSTEMS[settings.system]
-  return (
+  return wrap(
     <>
       <Swirl colors={['#fe5f55', '#1e2a2c', '#009dff']} />
       <div className="menu">
+        <div className="menu-lang">
+          <Choice label={t.language} options={LANGS} value={settings.lang} onChange={(lang) => update({ lang })} />
+        </div>
         <header className="menu-intro">
           <h1 className="wordmark" aria-label={TITLE}>
             {TITLE.split(' ').map((word, w) => (
@@ -145,12 +154,12 @@ export default function App() {
               </Fragment>
             ))}
           </h1>
-          <p className="text-3xl leading-tight">Learn to count cards at blackjack, one shoe at a time.</p>
+          <p className="text-3xl leading-tight">{t.tagline}</p>
 
-          <nav className="menu-nav" aria-label="Guides">
-            {Object.entries(GUIDES).map(([href, g]) => (
-              <a key={href} className="btn" href={href} style={{ background: g.color }} aria-label={g.title}>
-                {g.label}
+          <nav className="menu-nav" aria-label={t.guidesNav}>
+            {(Object.keys(GUIDES) as GuideId[]).map((id) => (
+              <a key={id} className="btn" href={`#${id}`} style={{ background: GUIDES[id].color }} aria-label={t.guides[id].title}>
+                {t.guides[id].label}
               </a>
             ))}
           </nav>
@@ -158,27 +167,29 @@ export default function App() {
           <section className="panel rules" aria-labelledby="rules-title">
             <div className="rules-head">
               <h2 id="rules-title" className="text-4xl leading-none">
-                The {system.name} count
+                {t.countTitle(system.name)}
               </h2>
-              <Choice label="Count" options={SYSTEM_IDS.map((id) => [id, SYSTEMS[id].name])} value={settings.system} onChange={(id) => update({ system: id })} />
+              <Choice label={t.count} options={SYSTEM_IDS.map((id) => [id, SYSTEMS[id].name])} value={settings.system} onChange={(id) => update({ system: id })} />
             </div>
             <div className="rules-rows">
               {valueGroups(settings.system).map(({ value, ranks }) => (
                 <RuleRow key={value} ranks={ranks} value={signed(value)} tone={valueTone(value)} />
               ))}
             </div>
-            <p className="text-2xl leading-snug">{NOTES[settings.system]} Three wrong answers end the run.</p>
+            <p className="text-2xl leading-snug">
+              {t.systemNotes[settings.system]} {t.threeWrong}
+            </p>
           </section>
         </header>
 
         <section className="panel antes" aria-labelledby="antes-title">
           <h2 id="antes-title" className="text-4xl leading-none">
-            Eight antes, one more deck each
+            {t.antesTitle}
           </h2>
           <div className="settings">
-            <Choice label="Speed" options={SPEEDS.map((s) => [s.factor, s.label])} value={settings.speed} onChange={(speed) => update({ speed })} />
+            <Choice label={t.speed} options={SPEEDS.map((x) => [x, `×${t.num(x)}`])} value={settings.speed} onChange={(speed) => update({ speed })} />
             <button className={settings.sound ? 'btn bg-green' : 'btn bg-panel-2'} aria-pressed={settings.sound} onClick={() => update({ sound: !settings.sound })}>
-              Sound {settings.sound ? 'on' : 'off'}
+              {t.sound(settings.sound)}
             </button>
           </div>
           <ol className="ante-list">
@@ -190,30 +201,30 @@ export default function App() {
                   ))}
                 </div>
                 <div className="ante-info">
-                  <h3 className="text-4xl leading-none">Ante {i + 1}</h3>
+                  <h3 className="text-4xl leading-none">{t.ante(i + 1)}</h3>
                   <p className="text-xl text-white/75">
-                    {decks} {decks === 1 ? 'deck' : 'decks'}, one card every {((dealMs * settings.speed) / 1000).toFixed(2)}s
+                    {t.deckCount(decks)}, {t.pace(t.num(dealMs / settings.speed / 1000, 2))}
                   </p>
-                  {progress.best[i] > 0 && <p className="text-xl text-gold">Best {progress.best[i].toLocaleString('en-US')}</p>}
+                  {progress.best[i] > 0 && <p className="text-xl text-gold">{t.best(t.num(progress.best[i]))}</p>}
                 </div>
-                <div className="ante-stars" aria-label={`${progress.stars[i]} of 3 stars`}>
+                <div className="ante-stars" aria-label={t.starsOf(progress.stars[i])}>
                   {[0, 1, 2].map((s) => (
                     <Suit key={s} suit={3} className={s < progress.stars[i] ? 'star' : 'star star-off'} />
                   ))}
                 </div>
                 {unlocked(i) ? (
-                  <button className="btn bg-chips" onClick={() => start(i)} aria-label={`Play ante ${i + 1}`}>
-                    Play
+                  <button className="btn bg-chips" onClick={() => start(i)} aria-label={t.playAnte(i + 1)}>
+                    {t.play}
                   </button>
                 ) : (
-                  <p className="ante-lock">Clear ante {i} first</p>
+                  <p className="ante-lock">{t.clearFirst(i)}</p>
                 )}
               </li>
             ))}
           </ol>
         </section>
       </div>
-    </>
+    </>,
   )
 }
 

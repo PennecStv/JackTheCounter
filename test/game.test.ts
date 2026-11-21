@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { LEVELS, PENETRATION, SYSTEMS, countValue, handTotal, makeShoe, planLevel, trueCountOk, valueGroups, type SystemId } from '../src/game.ts'
+import { LEVELS, PENETRATION, SYSTEMS, countValue, handTotal, makeShoe, planLevel, settle, trueCountOk, valueGroups, type SystemId } from '../src/game.ts'
 
 const IDS = Object.keys(SYSTEMS) as SystemId[]
 
@@ -44,4 +44,16 @@ test('true count accepts answers within one', () => {
   assert.ok(trueCountOk(3, 7, 130))
   assert.ok(!trueCountOk(1, 7, 130))
   assert.ok(!trueCountOk(4, 7, 130))
+})
+
+test('settle scores each hand against the dealer', () => {
+  const hand = (spot: number, ...ranks: number[]) => ranks.map((rank) => ({ card: { rank, suit: 0 }, spot }))
+  // dealer 18 against 20 (win) and a bust
+  assert.deepEqual(settle([...hand(0, 10, 10), ...hand(1, 10, 6, 9), ...hand(2, 10, 8)]), { hands: ['win', 'bust'], dealer: 'win' })
+  // blackjack against 18, and 18 against 18
+  assert.deepEqual(settle([...hand(0, 1, 13), ...hand(1, 9, 9), ...hand(2, 10, 8)]), { hands: ['blackjack', 'push'], dealer: null })
+  // dealer blackjack beats a three-card 21 and pushes a blackjack
+  assert.deepEqual(settle([...hand(0, 5, 6, 10), ...hand(1, 1, 12), ...hand(2, 1, 11)]), { hands: ['lose', 'push'], dealer: 'win' })
+  // dealer busts: standing hands win
+  assert.deepEqual(settle([...hand(0, 10, 3), ...hand(1, 10, 7), ...hand(2, 10, 6, 9)]), { hands: ['win', 'win'], dealer: 'bust' })
 })
