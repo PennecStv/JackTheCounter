@@ -12,7 +12,8 @@ const BITMAPS = [
 const PATHS = BITMAPS.map((rows) =>
   rows.flatMap((row, y) => [...row].map((px, x) => (px === '#' ? `M${x} ${y}h1v1h-1z` : ''))).join(''),
 )
-const SUIT_COLORS = ['#403995', '#f03464', '#235955', '#f06b3f']
+// Card faces: Jfred's Pixel Cards (CC0), one 50x75 PNG per card in public/cards/<suit>/<rank>.png.
+const SUIT_DIRS = ['spades', 'hearts', 'clubs', 'diamonds'] // in the game's suit order
 
 export function Suit({ suit, className }: { suit: number; className?: string }) {
   return (
@@ -24,25 +25,13 @@ export function Suit({ suit, className }: { suit: number; className?: string }) 
 
 export function PlayingCard({ card, tilt = 0, animate = true }: { card: Card; tilt?: number; animate?: boolean }) {
   const t = useT()
-  const rank = RANKS[card.rank - 1]
   return (
-    <div
-      role="img"
-      aria-label={t.card(card.rank, card.suit)}
+    <img
+      src={`${import.meta.env.BASE_URL}cards/${SUIT_DIRS[card.suit]}/${RANKS[card.rank - 1]}.png`}
+      alt={t.card(card.rank, card.suit)}
       className={animate ? 'pcard dealt' : 'pcard'}
-      style={{ '--suit': SUIT_COLORS[card.suit], '--tilt': `${tilt}deg` } as CSSProperties}
-    >
-      <span className="pcard-corner">
-        {rank}
-        <Suit suit={card.suit} className="pcard-small" />
-      </span>
-      <span className="pcard-center">
-        {card.rank > 10 || card.rank === 1 ? <span className="pcard-face">{rank}</span> : <Suit suit={card.suit} className="pcard-big" />}
-      </span>
-      <span className="pcard-corner pcard-corner-end" aria-hidden>
-        {rank}
-        <Suit suit={card.suit} className="pcard-small" />
-      </span>
-    </div>
+      style={{ '--tilt': `${tilt}deg` } as CSSProperties}
+      draggable={false}
+    />
   )
 }

@@ -37,6 +37,7 @@ The build is a PWA. Deploy `dist/` to any static host over HTTPS, open it on the
 
 Colours come from the Balatro modding palette in
 [balamod/aseprite-balamod-extension](https://github.com/balamod/aseprite-balamod-extension) (`UI.gpl`).
-Cards, suits, jingles and the swirl background are made in code; no game sprites are included.
+Card faces: [Pixel Cards](https://jfredd.itch.io/pixel-cards) by Jfred (CC0), in `public/cards/`.
+Suits, card backs, jingles and the swirl background are made in code; no Balatro sprites are included.
 The card sound is `src/assets/card.mp3`, supplied with the project.
 Font: [Jersey 10](https://fonts.google.com/specimen/Jersey+10) (OFL).
