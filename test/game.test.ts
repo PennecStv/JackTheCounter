@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
-import { LEVELS, PENETRATION, SYSTEMS, countValue, handTotal, makeShoe, planLevel, settle, trueCountOk, valueGroups, type SystemId } from '../src/game.ts'
+import { LEVELS, PENETRATION, SYSTEMS, countValue, handTotal, makeShoe, planLevel, settle, startCount, trueCountOk, valueGroups, type SystemId } from '../src/game.ts'
 
 const IDS = Object.keys(SYSTEMS) as SystemId[]
 
@@ -56,4 +56,13 @@ test('settle scores each hand against the dealer', () => {
   assert.deepEqual(settle([...hand(0, 5, 6, 10), ...hand(1, 1, 12), ...hand(2, 1, 11)]), { hands: ['lose', 'push'], dealer: 'win' })
   // dealer busts: standing hands win
   assert.deepEqual(settle([...hand(0, 10, 3), ...hand(1, 10, 7), ...hand(2, 10, 6, 9)]), { hands: ['win', 'win'], dealer: 'bust' })
+})
+
+test('KO starts at 4 − 4 × decks and a full shoe ends on the +4 pivot', () => {
+  for (const { decks } of LEVELS) {
+    const end = makeShoe(decks).reduce((rc, c) => rc + countValue('ko', c), startCount('ko', decks))
+    assert.equal(end, 4)
+    assert.equal(startCount('hilo', decks), 0)
+  }
+  assert.equal(startCount('ko', 8), -28)
 })

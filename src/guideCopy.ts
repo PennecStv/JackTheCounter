@@ -2,6 +2,53 @@
 import type { Lang } from '@/i18n'
 
 const en = {
+  // For each count: what it is for, how to read it, and what to do at each value.
+  howTo: {
+    hilo: {
+      purpose: 'Counting tells you when the cards left in the shoe are rich in tens and aces. That is when you bet more and change a handful of plays; the rest of the time you bet the minimum.',
+      read: 'Hi-Lo decides on the true count: the running count divided by the decks left. With one deck, the running count is close enough.',
+      countHead: 'True count',
+      rows: [
+        ['−3 or less', 'Bet the minimum or leave the table. Hit 12 against a 4, 5 or 6, and 13 against a 2 or 3.'],
+        ['−2', 'Bet the minimum. Hit 12 against a 4 or 6, and 13 against a 2.'],
+        ['−1', 'Bet the minimum. Hit 12 against a 4.'],
+        ['0', 'Bet the minimum and play the charts. Without surrender, stand on 16 against a 10.'],
+        ['+1', 'Still the minimum: the game is about even. Double 11 against an ace and 9 against a 2.'],
+        ['+2', 'Bet 2 units. Stand on 12 against a 3.'],
+        ['+3', 'Bet 4 units and take insurance. Stand on 12 against a 2, double 9 against a 7.'],
+        ['+4', 'Bet 6 units. Stand on 15 against a 10, double 10 against a 10 or an ace, split tens against a 6.'],
+        ['+5 or more', 'Bet 8 units. Stand on 16 against a 9, split tens against a 5.'],
+      ],
+      note: 'Plays add up: one listed at +3 still applies at +4 and above, one listed at −2 still applies at −3 and below. Where surrender is offered, also see the Fab 4 on the Charts page.',
+    },
+    ko: {
+      purpose: 'The same goal as Hi-Lo, without the division. Sevens count +1, so the count climbs as the shoe is dealt, and the running count alone tells you when to bet more.',
+      read: 'Start at 4 − 4 × decks (−4 with 2 decks, −28 with 8) and add each card. The moves below read that running count directly.',
+      countHead: 'Running count',
+      rows: [
+        ['Below the key count', 'Bet the minimum and play the charts.'],
+        ['Key count', 'Raise your bet: the edge starts turning yours. The key count is +2 with 1 deck, +1 with 2 decks, −4 with 6 decks and −6 with 8 decks.'],
+        ['+3 or more', 'Take insurance.'],
+        ['+4 or more', 'The pivot: your edge is about that of a Hi-Lo true count of +4. Bet big.'],
+      ],
+      note: 'With 3, 4, 5 or 7 decks, use the key count of the next smaller shoe in that list: you raise a little later, which is the safe side.',
+    },
+    omega: {
+      purpose: 'The same goal again, with finer weights: fours to sixes and tens count double, aces count zero. It judges playing decisions better than Hi-Lo, at the cost of harder arithmetic.',
+      read: 'Decide on the true count, as with Hi-Lo. Omega II counts in twos, so its true counts run about twice as high as Hi-Lo’s.',
+      countHead: 'True count',
+      rows: [
+        ['+2 or less', 'Bet the minimum and play the charts.'],
+        ['+3 or +4', 'Bet 2 units.'],
+        ['+5 or +6', 'Bet 4 units.'],
+        ['+7 or +8', 'Bet 6 units.'],
+        ['+9 or more', 'Bet 8 units.'],
+      ],
+      note: 'These bets double the Hi-Lo steps as a rule of thumb. For playing deviations use Omega II’s own index tables (Bryce Carlson, Blackjack for Blood), not Hi-Lo’s, and keep a side count of aces: more aces left than usual means bet more.',
+    },
+  },
+  moveHead: 'What to do',
+
   atLeast: (n: string) => `${n} or more`,
   orLess: (n: string) => `${n} or less`,
   below: (n: string) => `below ${n}`,
@@ -151,7 +198,7 @@ const en = {
       title: 'Which count?',
       terms: [
         ['Hi-Lo', 'Balanced and level one: every card is +1, 0 or −1. The most studied count, and the one the index plays on the Charts page are built for. Start here.'],
-        ['KO', 'Hi-Lo with sevens at +1, so a deck adds up to +4 instead of 0, which spares you the true count: you bet on the running count alone. The KO book starts the count at 4 − 4 × decks (−20 for six decks) and gives a key count to bet on; this trainer starts at 0 so you practise the tally itself.'],
+        ['KO', 'Hi-Lo with sevens at +1, so a deck adds up to +4 instead of 0, which spares you the true count: you bet on the running count alone. The count starts at 4 − 4 × decks (−20 for six decks), as in the KO book, so that +4 means about the same edge in any shoe; raise your bet from the key count.'],
         ['Omega II', 'Balanced and level two: fours to sixes are +2, tens −2, aces 0. It plays hands more accurately than Hi-Lo, but it is harder to keep at speed and needs a side count of aces to bet as well.'],
       ],
     },
@@ -178,6 +225,52 @@ const en = {
 }
 
 const fr: typeof en = {
+  howTo: {
+    hilo: {
+      purpose: 'Compter te dit quand les cartes qui restent dans le sabot sont riches en dix et en as. C’est là que tu mises plus et que tu changes quelques coups ; le reste du temps, tu mises le minimum.',
+      read: 'Hi-Lo se décide au compte réel : le compte courant divisé par le nombre de jeux restants. Avec un seul jeu, le compte courant suffit.',
+      countHead: 'Compte réel',
+      rows: [
+        ['−3 ou moins', 'Mise le minimum ou quitte la table. Tire sur 12 contre un 4, 5 ou 6, et sur 13 contre un 2 ou 3.'],
+        ['−2', 'Mise le minimum. Tire sur 12 contre un 4 ou 6, et sur 13 contre un 2.'],
+        ['−1', 'Mise le minimum. Tire sur 12 contre un 4.'],
+        ['0', 'Mise le minimum et suis les tableaux. Sans abandon, reste sur 16 contre un 10.'],
+        ['+1', 'Toujours le minimum : le jeu est à peu près équilibré. Double 11 contre un as et 9 contre un 2.'],
+        ['+2', 'Mise 2 unités. Reste sur 12 contre un 3.'],
+        ['+3', 'Mise 4 unités et prends l’assurance. Reste sur 12 contre un 2, double 9 contre un 7.'],
+        ['+4', 'Mise 6 unités. Reste sur 15 contre un 10, double 10 contre un 10 ou un as, sépare les dix contre un 6.'],
+        ['+5 ou plus', 'Mise 8 unités. Reste sur 16 contre un 9, sépare les dix contre un 5.'],
+      ],
+      note: 'Les coups s’additionnent : un coup indiqué à +3 vaut aussi à +4 et au-delà, un coup indiqué à −2 vaut aussi à −3 et en dessous. Si l’abandon est proposé, vois aussi les Fab 4 dans les Tableaux.',
+    },
+    ko: {
+      purpose: 'Le même but que Hi-Lo, sans division. Les sept valent +1, donc le compte monte au fil du sabot, et le compte courant suffit à dire quand miser plus.',
+      read: 'Pars de 4 − 4 × jeux (−4 avec 2 jeux, −28 avec 8) et ajoute chaque carte. Les coups ci-dessous se lisent directement sur ce compte courant.',
+      countHead: 'Compte courant',
+      rows: [
+        ['Sous le compte clé', 'Mise le minimum et suis les tableaux.'],
+        ['Compte clé', 'Augmente ta mise : l’avantage commence à passer de ton côté. Le compte clé vaut +2 avec 1 jeu, +1 avec 2 jeux, −4 avec 6 jeux et −6 avec 8 jeux.'],
+        ['+3 ou plus', 'Prends l’assurance.'],
+        ['+4 ou plus', 'Le pivot : ton avantage vaut à peu près celui d’un compte réel Hi-Lo de +4. Mise gros.'],
+      ],
+      note: 'Avec 3, 4, 5 ou 7 jeux, prends le compte clé du sabot juste en dessous dans cette liste : tu augmentes un peu plus tard, ce qui est le côté prudent.',
+    },
+    omega: {
+      purpose: 'Toujours le même but, avec des poids plus fins : les quatre à six et les dix comptent double, les as comptent zéro. Il juge mieux les décisions de jeu que Hi-Lo, au prix d’un calcul plus difficile.',
+      read: 'Décide au compte réel, comme en Hi-Lo. Omega II compte par deux, donc ses comptes réels montent à peu près deux fois plus haut que ceux de Hi-Lo.',
+      countHead: 'Compte réel',
+      rows: [
+        ['+2 ou moins', 'Mise le minimum et suis les tableaux.'],
+        ['+3 ou +4', 'Mise 2 unités.'],
+        ['+5 ou +6', 'Mise 4 unités.'],
+        ['+7 ou +8', 'Mise 6 unités.'],
+        ['+9 ou plus', 'Mise 8 unités.'],
+      ],
+      note: 'Ces mises doublent les paliers de Hi-Lo, c’est une règle approximative. Pour les écarts de jeu, utilise les tables propres à Omega II (Bryce Carlson, Blackjack for Blood), pas celles de Hi-Lo, et tiens un compte séparé des as : s’il en reste plus que d’habitude, mise davantage.',
+    },
+  },
+  moveHead: 'Que faire',
+
   atLeast: (n) => `${n} ou plus`,
   orLess: (n) => `${n} ou moins`,
   below: (n) => `sous ${n}`,
@@ -326,7 +419,7 @@ const fr: typeof en = {
       title: 'Quel comptage choisir ?',
       terms: [
         ['Hi-Lo', 'Équilibré et de niveau un : chaque carte vaut +1, 0 ou −1. Le comptage le plus étudié, et celui pour lequel sont calculés les écarts de la page Tableaux. Commence par lui.'],
-        ['KO', 'Hi-Lo avec les sept à +1 : un jeu fait +4 au lieu de 0, ce qui t’épargne le compte réel. Tu mises sur le compte courant seul. Le livre KO démarre le compte à 4 − 4 × jeux (−20 pour six jeux) et donne un compte clé à partir duquel miser ; ici on démarre à 0 pour travailler l’addition elle-même.'],
+        ['KO', 'Hi-Lo avec les sept à +1 : un jeu fait +4 au lieu de 0, ce qui t’épargne le compte réel. Tu mises sur le compte courant seul. Le compte part de 4 − 4 × jeux (−20 pour six jeux), comme dans le livre KO, pour que +4 donne à peu près le même avantage quel que soit le sabot ; augmente ta mise à partir du compte clé.'],
         ['Omega II', 'Équilibré et de niveau deux : les quatre à six valent +2, les dix −2, les as 0. Il joue les mains plus précisément que Hi-Lo, mais il est plus dur à tenir à vitesse réelle et demande un compte séparé des as pour bien miser.'],
       ],
     },

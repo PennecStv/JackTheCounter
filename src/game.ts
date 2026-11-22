@@ -29,6 +29,9 @@ export const SYSTEMS = {
 }
 export type SystemId = keyof typeof SYSTEMS
 export const countValue = (system: SystemId, c: Card) => SYSTEMS[system].values[c.rank - 1]
+// Where the running count starts. KO starts at 4 − 4 × decks, as in the KO book, so a full shoe
+// ends on +4 (the pivot) and its key counts apply; balanced counts start at 0.
+export const startCount = (system: SystemId, decks: number) => (SYSTEMS[system].balanced ? 0 : 4 - 4 * decks)
 
 // Ranks grouped by value, highest value first, ranks in chart order (2 to K, then the ace).
 const CHART_ORDER = [2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 1]

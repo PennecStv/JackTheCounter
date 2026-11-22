@@ -3,7 +3,7 @@ import { Confetti } from '@/components/ui/confetti'
 import { NumberTicker } from '@/components/ui/number-ticker'
 import { PlayingCard, Suit } from '@/components/PlayingCard'
 import {
-  ANTE_COLORS, DEALER, LEVELS, LIVES, RANKS, SPEEDS, SYSTEMS, countValue, planLevel, points, settle, signed, trueCount, trueCountOk, valueGroups, valueTone,
+  ANTE_COLORS, DEALER, LEVELS, LIVES, RANKS, SPEEDS, SYSTEMS, countValue, planLevel, points, settle, signed, startCount, trueCount, trueCountOk, valueGroups, valueTone,
   type Deal, type SystemId,
 } from '@/game'
 import { useT } from '@/i18n'
@@ -22,7 +22,7 @@ type State = {
   streak: number
   paused: boolean
 }
-type Action = { type: 'tick' } | { type: 'skip' } | { type: 'answer'; value: number } | { type: 'next' } | { type: 'pause'; paused: boolean }
+type Action = { type: 'tick' } | { type: 'nextHand' } | { type: 'answer'; value: number } | { type: 'next' } | { type: 'pause'; paused: boolean }
 type Result = { text: string; tone: 'blackjack' | 'win' | 'push' | 'lose' }
 
 type Props = {
@@ -38,7 +38,6 @@ type Props = {
 }
 
 const SWEEP_MS = 450
-const RESULT_MS = 800 // shortest pause on a finished round, long enough to see who won
 
 export function Play({ level, system, speed, sound, onSpeed, onWin, onExit, onRetry, onNext }: Props) {
   const t = useT()
@@ -49,6 +48,7 @@ export function Play({ level, system, speed, sound, onSpeed, onWin, onExit, onRe
   const [recap, setRecap] = useState(false)
   // Declared before useReducer: React runs the reducer while rendering that line, and it counts with this.
   const value = (d: Deal) => countValue(system, d.card)
+  const start = startCount(system, decks)
   const [s, dispatch] = useReducer(reduce, {
     round: 0, shown: 0, swept: false, phase: 'deal', kind: 'rc', feedback: null, lives: LIVES, score: 0, streak: 0, paused: false,
   })
@@ -56,7 +56,7 @@ export function Play({ level, system, speed, sound, onSpeed, onWin, onExit, onRe
   // Cards dealt and running count so far, from the rounds already swept plus the current table.
   function countAt(round: number, shown: number) {
     const deals = plan.rounds.slice(0, round).flat().concat(plan.rounds[round]?.slice(0, shown) ?? [])
-    return { dealt: deals.length, rc: deals.reduce((sum, d) => sum + value(d), 0) }
+    return { dealt: deals.length, rc: deals.reduce((sum, d) => sum + value(d), start) }
   }
   const { dealt, rc } = countAt(s.round, s.shown)
 
@@ -64,11 +64,10 @@ export function Play({ level, system, speed, sound, onSpeed, onWin, onExit, onRe
     if (a.type === 'pause') return { ...s, paused: a.paused }
     if (a.type === 'tick') {
       if (s.shown < plan.rounds[s.round].length) return { ...s, shown: s.shown + 1 }
-      if (!s.swept) return { ...s, swept: true }
       return { ...s, round: s.round + 1, shown: 0, swept: false, phase: plan.checks.has(s.round) ? 'ask' : 'deal', kind: 'rc' }
     }
-    // Skip: show the rest of the round at once (every card still counts), or clear a finished round now.
-    if (a.type === 'skip') return s.shown < plan.rounds[s.round].length ? { ...s, shown: plan.rounds[s.round].length } : { ...s, swept: true }
+    // The player ends the pause after a finished round: its cards go to the tray.
+    if (a.type === 'nextHand') return { ...s, swept: true }
     if (a.type === 'answer') {
       const { dealt, rc } = countAt(s.round, s.shown)
       const left = plan.shoeSize - dealt
@@ -87,16 +86,17 @@ export function Play({ level, system, speed, sound, onSpeed, onWin, onExit, onRe
     return { ...s, phase: s.round >= plan.rounds.length ? 'won' : 'deal', feedback: null }
   }
 
-  // The dealing clock: one card per tick, a longer beat before the table is swept.
+  // The dealing clock: one card per tick with its sound. A finished round waits, as at a real
+  // table, until the player asks for the next hand.
   useEffect(() => {
     if (s.phase !== 'deal' || s.paused) return
-    const roundDone = s.shown >= plan.rounds[s.round].length
+    if (!s.swept && s.shown >= plan.rounds[s.round].length) return
     const id = setTimeout(
       () => {
-        if (sound && !s.swept) sfx(roundDone ? 'sweep' : 'deal')
+        if (sound && !s.swept) sfx('deal')
         dispatch({ type: 'tick' })
       },
-      s.swept ? SWEEP_MS : roundDone ? Math.max(dealMs * 1.8, RESULT_MS) : s.shown === 0 ? Math.min(500, dealMs) : dealMs,
+      s.swept ? SWEEP_MS : s.shown === 0 ? Math.min(500, dealMs) : dealMs,
     )
     return () => clearTimeout(id)
   }, [s.phase, s.paused, s.round, s.shown, s.swept, dealMs, plan, sound])
@@ -140,9 +140,9 @@ export function Play({ level, system, speed, sound, onSpeed, onWin, onExit, onRe
   const table = s.phase === 'deal' ? plan.rounds[s.round].slice(0, s.shown) : []
   const hand = (spot: number) => table.filter((d) => d.spot === spot)
   const roundDone = s.phase === 'deal' && !s.swept && s.shown >= plan.rounds[s.round].length
-  const skip = () => {
-    if (sound) sfx(roundDone ? 'sweep' : 'deal')
-    dispatch({ type: 'skip' })
+  const nextHand = () => {
+    if (sound) sfx('sweep')
+    dispatch({ type: 'nextHand' })
   }
 
   // Who won the round, shown once its last card is down.
@@ -159,6 +159,9 @@ export function Play({ level, system, speed, sound, onSpeed, onWin, onExit, onRe
   const discarded = s.swept ? dealt : dealt - table.length
   const mult = Math.min(1 + s.streak, 8)
   const speedAt = SPEEDS.indexOf(speed)
+  // Slider range: wide enough for any likely count, set by the shoe size and never by the answer.
+  const level2 = Math.max(...SYSTEMS[system].values.map(Math.abs)) // 2 for Omega II
+  const answerBound = level2 * (s.kind === 'rc' ? 8 + 5 * decks : 10)
 
   return (
     <div className="play" style={{ '--ante': ANTE_COLORS[level] } as CSSProperties}>
@@ -166,7 +169,8 @@ export function Play({ level, system, speed, sound, onSpeed, onWin, onExit, onRe
         <div className="hud-title">
           <h1 className="text-5xl leading-none">{t.ante(level + 1)}</h1>
           <p className="text-2xl text-white/75">
-            {SYSTEMS[system].name}, {t.deckCount(decks)}, {t.roundOf(s.phase === 'deal' ? s.round + 1 : s.round, plan.rounds.length)}
+            {SYSTEMS[system].name}, {t.deckCount(decks)}, {start !== 0 && `${t.startAt(signed(start))}, `}
+            {t.roundOf(s.phase === 'deal' ? s.round + 1 : s.round, plan.rounds.length)}
           </p>
         </div>
         <div className="hud-speed" role="group" aria-label={t.speed}>
@@ -206,8 +210,11 @@ export function Play({ level, system, speed, sound, onSpeed, onWin, onExit, onRe
               {s.paused ? t.resume : t.pause}
             </button>
           )}
-          <button className="btn bg-chips" disabled={!canRecap} onClick={openRecap}>
+          <button className="btn bg-panel-2" disabled={!canRecap} onClick={openRecap}>
             {t.recap}
+          </button>
+          <button className="btn bg-chips" onClick={onRetry}>
+            {t.tryAgain}
           </button>
           <button className="btn bg-mult" onClick={onExit}>
             {t.quit}
@@ -231,9 +238,14 @@ export function Play({ level, system, speed, sound, onSpeed, onWin, onExit, onRe
               <Spot label={t.hand(1)} deals={hand(0)} result={result(0)} />
               <Spot label={t.hand(2)} deals={hand(1)} result={result(1)} />
             </div>
-            <button className="btn bg-green skip" disabled={s.swept || s.paused} onClick={skip}>
-              {t.skip}
-            </button>
+            {/* the slot keeps its height so the table does not jump when the button appears */}
+            <div className="next-hand">
+              {roundDone && (
+                <button className="btn bg-green pop" autoFocus onClick={nextHand}>
+                  {t.nextHand}
+                </button>
+              )}
+            </div>
             {s.paused && (
               <div className="paused">
                 <p className="text-6xl">{t.paused}</p>
@@ -253,7 +265,9 @@ export function Play({ level, system, speed, sound, onSpeed, onWin, onExit, onRe
               <AnswerPad
                 key={`${s.round}-${s.kind}`}
                 title={s.kind === 'rc' ? t.askRc : t.askTc}
-                hint={s.kind === 'rc' ? t.hintRc : t.hintTc(signed(rc))}
+                hint={s.kind === 'rc' ? (start ? t.hintRcFrom(signed(start)) : t.hintRc) : t.hintTc(signed(rc))}
+                initial={s.kind === 'rc' ? start : 0}
+                bound={answerBound}
                 onSubmit={(value) => dispatch({ type: 'answer', value })}
               />
             )}
@@ -289,7 +303,7 @@ export function Play({ level, system, speed, sound, onSpeed, onWin, onExit, onRe
         )}
       </main>
 
-      {recap && <Recap rounds={plan.rounds.slice(0, s.round)} value={value} onClose={() => setRecap(false)} />}
+      {recap && <Recap rounds={plan.rounds.slice(0, s.round)} start={start} value={value} onClose={() => setRecap(false)} />}
     </div>
   )
 }
@@ -309,7 +323,7 @@ function Spot({ label, deals, result }: { label: string; deals: Deal[]; result?:
 }
 
 // Every round swept so far, latest first, with each card's value and the count after the round.
-function Recap({ rounds, value, onClose }: { rounds: Deal[][]; value: (d: Deal) => number; onClose: () => void }) {
+function Recap({ rounds, start, value, onClose }: { rounds: Deal[][]; start: number; value: (d: Deal) => number; onClose: () => void }) {
   const t = useT()
   const dialog = useRef<HTMLDialogElement>(null)
   useEffect(() => {
@@ -319,7 +333,7 @@ function Recap({ rounds, value, onClose }: { rounds: Deal[][]; value: (d: Deal) 
   const items = rounds
     .reduce<{ i: number; deals: Deal[]; net: number; running: number }[]>((acc, deals, i) => {
       const net = deals.reduce((sum, d) => sum + value(d), 0)
-      return [...acc, { i, deals, net, running: (acc.at(-1)?.running ?? 0) + net }]
+      return [...acc, { i, deals, net, running: (acc.at(-1)?.running ?? start) + net }]
     }, [])
     .reverse()
 
@@ -362,29 +376,17 @@ function Recap({ rounds, value, onClose }: { rounds: Deal[][]; value: (d: Deal) 
   )
 }
 
-const KEYS = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '-', '0', 'del']
-
-function AnswerPad({ title, hint, onSubmit }: { title: string; hint: string; onSubmit: (n: number) => void }) {
+// The answer: a counter with − and + for small steps and a slider for big jumps.
+function AnswerPad({ title, hint, bound, initial, onSubmit }: { title: string; hint: string; bound: number; initial: number; onSubmit: (n: number) => void }) {
   const t = useT()
-  const [entry, setEntry] = useState('')
-  const value = entry === '' || entry === '-' ? null : Number(entry)
-
-  const press = (k: string) =>
-    setEntry((e) => {
-      if (k === 'del') return e.slice(0, -1)
-      if (k === '-') return e.startsWith('-') ? e.slice(1) : '-' + e
-      const digits = e.replace('-', '')
-      if (digits.length >= 3) return e
-      return (e.startsWith('-') ? '-' : '') + (digits === '0' ? k : digits + k)
-    })
+  const [value, setValue] = useState(initial)
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      if (/^[0-9]$/.test(e.key)) press(e.key)
-      else if (e.key === '-' || e.key === '+') press('-')
-      else if (e.key === 'Backspace') press('del')
-      // A focused button in the panel (Check) handles Enter itself; one left focused in the HUD must not.
-      else if (e.key === 'Enter' && value !== null && !(e.target instanceof HTMLElement && e.target.closest('.ask button'))) {
+      if (e.key === '+' || e.key === '=') setValue((v) => v + 1)
+      else if (e.key === '-') setValue((v) => v - 1)
+      // A focused button in the panel handles Enter itself; one left focused in the HUD must not.
+      else if (e.key === 'Enter' && !(e.target instanceof HTMLElement && e.target.closest('.ask button'))) {
         e.preventDefault() // stops the focused HUD button, and the autofocused "Keep dealing" button, from also firing
         onSubmit(value)
       }
@@ -393,22 +395,37 @@ function AnswerPad({ title, hint, onSubmit }: { title: string; hint: string; onS
     return () => removeEventListener('keydown', onKey)
   }, [value, onSubmit])
 
+  // Buttons do not take focus on click, so Enter keeps submitting instead of pressing them again.
+  const keep = (e: React.MouseEvent) => e.preventDefault()
   return (
     <>
       <h2>{title}</h2>
       <p className="text-2xl text-white/80">{hint}</p>
-      <output className="entry" aria-live="polite">
-        {entry === '' ? '?' : entry}
-      </output>
-      <div className="keypad">
-        {KEYS.map((k) => (
-          <button key={k} className="btn key bg-panel-2" onMouseDown={(e) => e.preventDefault()} onClick={() => press(k)} aria-label={k === 'del' ? t.deleteKey : k === '-' ? t.minusKey : k}>
-            {k === 'del' ? '⌫' : k === '-' ? '±' : k}
-          </button>
-        ))}
+      <div className="stepper">
+        <button className="btn bg-mult" onMouseDown={keep} onClick={() => setValue((v) => v - 1)} aria-label={t.lessKey}>
+          −
+        </button>
+        <output className="entry" aria-live="polite">
+          {signed(value)}
+        </output>
+        <button className="btn bg-chips" onMouseDown={keep} onClick={() => setValue((v) => v + 1)} aria-label={t.moreKey}>
+          +
+        </button>
       </div>
-      <button className="btn bg-chips w-full" disabled={value === null} onClick={() => value !== null && onSubmit(value)}>
-        {t.check} {value === null ? '' : signed(value)}
+      {/* shortcut: values past the slider's ends are reached with the buttons, the thumb stays at the end */}
+      <input
+        type="range"
+        className="slider"
+        min={-bound}
+        max={bound}
+        value={Math.max(-bound, Math.min(bound, value))}
+        onChange={(e) => setValue(Number(e.target.value))}
+        aria-label={t.answerLabel}
+        aria-valuetext={signed(value)}
+        autoFocus
+      />
+      <button className="btn bg-chips w-full" onClick={() => onSubmit(value)}>
+        {t.check} {signed(value)}
       </button>
     </>
   )

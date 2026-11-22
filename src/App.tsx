@@ -2,6 +2,7 @@ import { Fragment, useEffect, useState, useSyncExternalStore, type CSSProperties
 import { PlayingCard, Suit } from '@/components/PlayingCard'
 import { Swirl } from '@/components/Swirl'
 import { ANTE_COLORS, LEVELS, SPEEDS, SYSTEMS, signed, valueGroups, valueTone, type SystemId } from '@/game'
+import { COPY } from '@/guideCopy'
 import { Bible, Charts, Rules } from '@/Guides'
 import { LANGS, LangContext, STRINGS, browserLang, type Lang } from '@/i18n'
 import { Play } from '@/Play'
@@ -133,6 +134,7 @@ export default function App() {
   }
 
   const system = SYSTEMS[settings.system]
+  const howTo = COPY[settings.lang].howTo[settings.system]
   return wrap(
     <>
       <Swirl colors={['#fe5f55', '#1e2a2c', '#009dff']} />
@@ -179,6 +181,25 @@ export default function App() {
             <p className="text-2xl leading-snug">
               {t.systemNotes[settings.system]} {t.threeWrong}
             </p>
+            <details className="howto">
+              <summary>{t.howTo}</summary>
+              <div className="howto-body">
+                <p>{howTo.purpose}</p>
+                <p>{howTo.read}</p>
+                <p className="howto-cols">
+                  {howTo.countHead} → {COPY[settings.lang].moveHead}
+                </p>
+                <dl className="terms">
+                  {howTo.rows.map(([count, move]) => (
+                    <div key={count}>
+                      <dt>{count}</dt>
+                      <dd>{move}</dd>
+                    </div>
+                  ))}
+                </dl>
+                <p>{howTo.note}</p>
+              </div>
+            </details>
           </section>
         </header>
 
