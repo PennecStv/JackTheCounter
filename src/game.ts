@@ -26,6 +26,7 @@ export const SYSTEMS = {
   hilo: { name: 'Hi-Lo', values: [-1, 1, 1, 1, 1, 1, 0, 0, 0, -1, -1, -1, -1], balanced: true },
   ko: { name: 'KO', values: [-1, 1, 1, 1, 1, 1, 1, 0, 0, -1, -1, -1, -1], balanced: false },
   omega: { name: 'Omega II', values: [0, 1, 1, 2, 2, 2, 1, 0, -1, -2, -2, -2, -2], balanced: true },
+  zen: { name: 'Zen', values: [-1, 1, 1, 2, 2, 2, 1, 0, 0, -2, -2, -2, -2], balanced: true },
 }
 export type SystemId = keyof typeof SYSTEMS
 export const countValue = (system: SystemId, c: Card) => SYSTEMS[system].values[c.rank - 1]

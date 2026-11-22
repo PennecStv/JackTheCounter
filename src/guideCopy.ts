@@ -46,6 +46,19 @@ const en = {
       ],
       note: 'These bets double the Hi-Lo steps as a rule of thumb. For playing deviations use Omega II’s own index tables (Bryce Carlson, Blackjack for Blood), not Hi-Lo’s, and keep a side count of aces: more aces left than usual means bet more.',
     },
+    zen: {
+      purpose: 'The same goal with finer weights: fours to sixes and tens count double, and aces stay in the count at −1. One number then serves both your bets and your plays, with no side count of aces.',
+      read: 'Decide on the true count, as with Hi-Lo. Zen counts in twos, so its true counts run a little under twice as high as Hi-Lo’s.',
+      countHead: 'True count',
+      rows: [
+        ['+2 or less', 'Bet the minimum and play the charts.'],
+        ['+3 or +4', 'Bet 2 units.'],
+        ['+5 or +6', 'Bet 4 units.'],
+        ['+7 or +8', 'Bet 6 units.'],
+        ['+9 or more', 'Bet 8 units.'],
+      ],
+      note: 'These bets scale the Hi-Lo steps as a rule of thumb. For playing deviations use the Zen indices from Arnold Snyder’s Blackbelt in Blackjack, not Hi-Lo’s.',
+    },
   },
   moveHead: 'What to do',
 
@@ -145,7 +158,7 @@ const en = {
       p: 'The eighteen Hi-Lo plays where the true count overrules the chart, most valuable first. When the count is in range, make the play; otherwise follow the chart.',
     },
     fab4: { title: 'The Fab 4 surrenders', p: 'Where late surrender is offered, check these before the Illustrious 18.' },
-    values: { title: 'Count values', p: 'What each card is worth in the three counts you can train here, and what a full deck adds up to.' },
+    values: { title: 'Count values', p: 'What each card is worth in the counts you can train here, and what a full deck adds up to.' },
   },
 
   bible: {
@@ -200,6 +213,8 @@ const en = {
         ['Hi-Lo', 'Balanced and level one: every card is +1, 0 or −1. The most studied count, and the one the index plays on the Charts page are built for. Start here.'],
         ['KO', 'Hi-Lo with sevens at +1, so a deck adds up to +4 instead of 0, which spares you the true count: you bet on the running count alone. The count starts at 4 − 4 × decks (−20 for six decks), as in the KO book, so that +4 means about the same edge in any shoe; raise your bet from the key count.'],
         ['Omega II', 'Balanced and level two: fours to sixes are +2, tens −2, aces 0. It plays hands more accurately than Hi-Lo, but it is harder to keep at speed and needs a side count of aces to bet as well.'],
+        ['Zen', 'Balanced and level two like Omega II, but aces stay in the count at −1 and nines at 0: twos, threes and sevens +1, fours to sixes +2, tens −2. A little less sharp than Omega II for playing hands, better for betting, and no side count needed. From Arnold Snyder’s Blackbelt in Blackjack.'],
+        ['CAC2', 'A level-two count by Cacarulo, sold by QFIT (Norman Wattenberger). Its card values are private, so it is not in this trainer. Its author ranks it above Zen, Halves, Uston APC and RPC in six-deck and two-deck games, and a paid “Enhanced” version adds a side count. If you learn it, what you train here carries over: keeping a level-two count at speed and turning it into a true count.'],
       ],
     },
     practise: {
@@ -267,6 +282,19 @@ const fr: typeof en = {
         ['+9 ou plus', 'Mise 8 unités.'],
       ],
       note: 'Ces mises doublent les paliers de Hi-Lo, c’est une règle approximative. Pour les écarts de jeu, utilise les tables propres à Omega II (Bryce Carlson, Blackjack for Blood), pas celles de Hi-Lo, et tiens un compte séparé des as : s’il en reste plus que d’habitude, mise davantage.',
+    },
+    zen: {
+      purpose: 'Toujours le même but, avec des poids plus fins : les quatre à six et les dix comptent double, et les as restent dans le compte à −1. Un seul nombre sert alors à miser et à jouer, sans compte séparé des as.',
+      read: 'Décide au compte réel, comme en Hi-Lo. Zen compte par deux, donc ses comptes réels montent un peu moins de deux fois plus haut que ceux de Hi-Lo.',
+      countHead: 'Compte réel',
+      rows: [
+        ['+2 ou moins', 'Mise le minimum et suis les tableaux.'],
+        ['+3 ou +4', 'Mise 2 unités.'],
+        ['+5 ou +6', 'Mise 4 unités.'],
+        ['+7 ou +8', 'Mise 6 unités.'],
+        ['+9 ou plus', 'Mise 8 unités.'],
+      ],
+      note: 'Ces mises suivent les paliers de Hi-Lo, c’est une règle approximative. Pour les écarts de jeu, utilise les tables propres à Zen (Arnold Snyder, Blackbelt in Blackjack), pas celles de Hi-Lo.',
     },
   },
   moveHead: 'Que faire',
@@ -366,7 +394,7 @@ const fr: typeof en = {
       p: 'Les dix-huit écarts Hi-Lo où le compte réel l’emporte sur le tableau, du plus rentable au moins rentable. Quand le compte est dans la zone, joue le coup indiqué ; sinon, suis le tableau.',
     },
     fab4: { title: 'Les Fab 4 (abandons)', p: 'Là où l’abandon tardif est proposé, vérifie-les avant les Illustrious 18.' },
-    values: { title: 'Valeurs de comptage', p: 'Ce que vaut chaque carte dans les trois comptages que tu peux travailler ici, et le total d’un jeu complet.' },
+    values: { title: 'Valeurs de comptage', p: 'Ce que vaut chaque carte dans les comptages que tu peux travailler ici, et le total d’un jeu complet.' },
   },
 
   bible: {
@@ -421,6 +449,8 @@ const fr: typeof en = {
         ['Hi-Lo', 'Équilibré et de niveau un : chaque carte vaut +1, 0 ou −1. Le comptage le plus étudié, et celui pour lequel sont calculés les écarts de la page Tableaux. Commence par lui.'],
         ['KO', 'Hi-Lo avec les sept à +1 : un jeu fait +4 au lieu de 0, ce qui t’épargne le compte réel. Tu mises sur le compte courant seul. Le compte part de 4 − 4 × jeux (−20 pour six jeux), comme dans le livre KO, pour que +4 donne à peu près le même avantage quel que soit le sabot ; augmente ta mise à partir du compte clé.'],
         ['Omega II', 'Équilibré et de niveau deux : les quatre à six valent +2, les dix −2, les as 0. Il joue les mains plus précisément que Hi-Lo, mais il est plus dur à tenir à vitesse réelle et demande un compte séparé des as pour bien miser.'],
+        ['Zen', 'Équilibré et de niveau deux comme Omega II, mais les as restent dans le compte à −1 et les neuf à 0 : deux, trois et sept +1, quatre à six +2, dix −2. Un peu moins fin qu’Omega II pour jouer les mains, meilleur pour miser, et sans compte séparé. Tiré de Blackbelt in Blackjack, d’Arnold Snyder.'],
+        ['CAC2', 'Un comptage de niveau deux créé par Cacarulo et vendu par QFIT (Norman Wattenberger). Ses valeurs de cartes sont privées, il n’est donc pas dans cet entraîneur. Son auteur le classe devant Zen, Halves, Uston APC et RPC en sabot de six comme de deux jeux, et une version « Enhanced » payante ajoute un compte séparé. Si tu l’apprends, ce que tu travailles ici te servira : tenir un comptage de niveau deux à vitesse réelle et le convertir en compte réel.'],
       ],
     },
     practise: {

@@ -9,7 +9,7 @@ import { Play } from '@/Play'
 import { unlockAudio } from '@/sound'
 
 type Progress = { stars: number[]; best: number[] }
-type Settings = { system: SystemId; speed: number; sound: boolean; lang: Lang }
+type Settings = { system: SystemId; speed: number; sound: boolean; lang: Lang; showCount: boolean; autoNext: boolean }
 const KEY = 'jack-the-counter'
 const SYSTEM_IDS = Object.keys(SYSTEMS) as SystemId[]
 
@@ -32,9 +32,11 @@ function loadSettings(): Settings {
       speed: SPEEDS.includes(s.speed) ? s.speed : 1,
       sound: s.sound !== false,
       lang: Object.hasOwn(STRINGS, s.lang) ? s.lang : browserLang(),
+      showCount: s.showCount === true,
+      autoNext: s.autoNext === true,
     }
   } catch {
-    return { system: 'hilo', speed: 1, sound: true, lang: browserLang() }
+    return { system: 'hilo', speed: 1, sound: true, lang: browserLang(), showCount: false, autoNext: false }
   }
 }
 
@@ -103,7 +105,7 @@ export default function App() {
           key={run}
           level={level}
           {...settings}
-          onSpeed={(speed) => update({ speed })}
+          onChange={update}
           onWin={(stars, score) => saveWin(level, stars, score)}
           onExit={() => setLevel(null)}
           onRetry={() => start(level)}

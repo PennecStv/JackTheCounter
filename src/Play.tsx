@@ -1,9 +1,10 @@
+import { Eye, EyeOff } from 'lucide-react'
 import { useEffect, useReducer, useRef, useState, type CSSProperties } from 'react'
 import { Confetti } from '@/components/ui/confetti'
 import { NumberTicker } from '@/components/ui/number-ticker'
 import { PlayingCard, Suit } from '@/components/PlayingCard'
 import {
-  ANTE_COLORS, DEALER, LEVELS, LIVES, RANKS, SPEEDS, SYSTEMS, countValue, planLevel, points, settle, signed, startCount, trueCount, trueCountOk, valueGroups, valueTone,
+  ANTE_COLORS, DEALER, LEVELS, LIVES, RANKS, SPEEDS, SYSTEMS, countValue, handTotal, planLevel, points, settle, signed, startCount, trueCount, trueCountOk, valueGroups, valueTone,
   type Deal, type SystemId,
 } from '@/game'
 import { useT } from '@/i18n'
@@ -30,7 +31,9 @@ type Props = {
   system: SystemId
   speed: number
   sound: boolean
-  onSpeed: (speed: number) => void
+  showCount: boolean // the running count stays on screen
+  autoNext: boolean // a finished round goes to the tray by itself
+  onChange: (patch: Partial<Pick<Props, 'speed' | 'showCount' | 'autoNext'>>) => void
   onWin: (stars: number, score: number) => void
   onExit: () => void
   onRetry: () => void
@@ -38,8 +41,9 @@ type Props = {
 }
 
 const SWEEP_MS = 450
+const AUTO_NEXT_MS = 1600 // at ×1: long enough to see who won
 
-export function Play({ level, system, speed, sound, onSpeed, onWin, onExit, onRetry, onNext }: Props) {
+export function Play({ level, system, speed, sound, showCount, autoNext, onChange, onWin, onExit, onRetry, onNext }: Props) {
   const t = useT()
   const { decks } = LEVELS[level]
   const dealMs = LEVELS[level].dealMs / speed
@@ -87,19 +91,22 @@ export function Play({ level, system, speed, sound, onSpeed, onWin, onExit, onRe
   }
 
   // The dealing clock: one card per tick with its sound. A finished round waits, as at a real
-  // table, until the player asks for the next hand.
+  // table, until the player asks for the next hand, or moves on by itself with auto next hand.
   useEffect(() => {
     if (s.phase !== 'deal' || s.paused) return
-    if (!s.swept && s.shown >= plan.rounds[s.round].length) return
+    const done = !s.swept && s.shown >= plan.rounds[s.round].length
+    if (done && !autoNext) return
+    if (s.swept && sound) sfx('sweep')
     const id = setTimeout(
       () => {
+        if (done) return dispatch({ type: 'nextHand' })
         if (sound && !s.swept) sfx('deal')
         dispatch({ type: 'tick' })
       },
-      s.swept ? SWEEP_MS : s.shown === 0 ? Math.min(500, dealMs) : dealMs,
+      done ? Math.max(800, AUTO_NEXT_MS / speed) : s.swept ? SWEEP_MS : s.shown === 0 ? Math.min(500, dealMs) : dealMs,
     )
     return () => clearTimeout(id)
-  }, [s.phase, s.paused, s.round, s.shown, s.swept, dealMs, plan, sound])
+  }, [s.phase, s.paused, s.round, s.shown, s.swept, dealMs, plan, sound, autoNext, speed])
 
   useEffect(() => {
     if (sound && s.feedback) sfx(s.feedback.ok ? 'right' : 'wrong')
@@ -140,10 +147,7 @@ export function Play({ level, system, speed, sound, onSpeed, onWin, onExit, onRe
   const table = s.phase === 'deal' ? plan.rounds[s.round].slice(0, s.shown) : []
   const hand = (spot: number) => table.filter((d) => d.spot === spot)
   const roundDone = s.phase === 'deal' && !s.swept && s.shown >= plan.rounds[s.round].length
-  const nextHand = () => {
-    if (sound) sfx('sweep')
-    dispatch({ type: 'nextHand' })
-  }
+  const nextHand = () => dispatch({ type: 'nextHand' })
 
   // Who won the round, shown once its last card is down.
   const settled = roundDone ? settle(plan.rounds[s.round]) : null
@@ -159,6 +163,7 @@ export function Play({ level, system, speed, sound, onSpeed, onWin, onExit, onRe
   const discarded = s.swept ? dealt : dealt - table.length
   const mult = Math.min(1 + s.streak, 8)
   const speedAt = SPEEDS.indexOf(speed)
+  const tc = trueCount(rc, plan.shoeSize - dealt)
   // Slider range: wide enough for any likely count, set by the shoe size and never by the answer.
   const level2 = Math.max(...SYSTEMS[system].values.map(Math.abs)) // 2 for Omega II
   const answerBound = level2 * (s.kind === 'rc' ? 8 + 5 * decks : 10)
@@ -174,11 +179,14 @@ export function Play({ level, system, speed, sound, onSpeed, onWin, onExit, onRe
           </p>
         </div>
         <div className="hud-speed" role="group" aria-label={t.speed}>
-          <button className="btn bg-panel-2" aria-label={t.slower} disabled={speedAt <= 0} onClick={() => onSpeed(SPEEDS[speedAt - 1])}>
+          <span className="choice-label" aria-hidden>
+            {t.speed}
+          </span>
+          <button className="btn bg-panel-2" aria-label={t.slower} disabled={speedAt <= 0} onClick={() => onChange({ speed: SPEEDS[speedAt - 1] })}>
             −
           </button>
           <span className="hud-speed-value">×{t.num(speed)}</span>
-          <button className="btn bg-panel-2" aria-label={t.faster} disabled={speedAt === SPEEDS.length - 1} onClick={() => onSpeed(SPEEDS[speedAt + 1])}>
+          <button className="btn bg-panel-2" aria-label={t.faster} disabled={speedAt === SPEEDS.length - 1} onClick={() => onChange({ speed: SPEEDS[speedAt + 1] })}>
             +
           </button>
         </div>
@@ -196,6 +204,22 @@ export function Play({ level, system, speed, sound, onSpeed, onWin, onExit, onRe
             <Suit key={i} suit={1} className={i < s.lives ? 'life' : 'life life-lost'} />
           ))}
         </div>
+        <div className="hud-count">
+          <button className={showCount ? 'btn bg-chips' : 'btn bg-panel-2'} aria-pressed={showCount} aria-label={t.showCount} title={t.showCount} onClick={() => onChange({ showCount: !showCount })}>
+            {showCount ? <Eye size={22} aria-hidden /> : <EyeOff size={22} aria-hidden />}
+          </button>
+          {showCount ? (
+            <p>
+              {t.rcNow(signed(rc))}
+              {askTrue && <span>{t.tcNow(`${tc > 0 ? '+' : tc < 0 ? '−' : ''}${t.num(Math.abs(tc), 1)}`)}</span>}
+            </p>
+          ) : (
+            <p className="text-white/60">{t.countHidden}</p>
+          )}
+        </div>
+        <button className={autoNext ? 'btn bg-green hud-auto' : 'btn bg-panel-2 hud-auto'} aria-pressed={autoNext} onClick={() => onChange({ autoNext: !autoNext })}>
+          {t.autoNext}
+        </button>
         <dl className="hud-rules" aria-label={t.values(SYSTEMS[system].name)}>
           {valueGroups(system).map(({ value, ranks }) => (
             <div key={value}>
@@ -317,7 +341,10 @@ function Spot({ label, deals, result }: { label: string; deals: Deal[]; result?:
           <PlayingCard key={i} card={d.card} tilt={((d.card.rank * 7 + d.card.suit * 3 + i) % 7) - 3} />
         ))}
       </div>
-      <span className="spot-label">{label}</span>
+      <span className="spot-label">
+        {label}
+        {deals.length > 0 && <span className="spot-total">{handTotal(deals.map((d) => d.card))}</span>}
+      </span>
     </div>
   )
 }
