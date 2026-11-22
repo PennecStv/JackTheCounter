@@ -35,7 +35,8 @@ Built with Vite, React, TypeScript and Tailwind CSS. The game engine is in `src/
 
 ## Deploy
 
-The test build is hosted on Cloudflare Pages, in the `jack-the-counter` project. After `npx wrangler login`:
+The test build is hosted on Cloudflare Pages, in the `jack-the-counter` project. Every push to `main`
+is tested, built and deployed there by `.github/workflows/deploy.yml`. To deploy by hand, after `npx wrangler login`:
 
 ```bash
 npx vite build --mode staging   # or `npm run build` for the real game, with antes locked
