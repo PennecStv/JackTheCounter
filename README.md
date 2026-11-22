@@ -1,7 +1,23 @@
-# Jack the Counter
-Learn to count cards at blackjack and beat the evil dealer.
+<p align="center">
+  <img src=".github/title.svg" alt="Jack the Counter" width="720">
+</p>
 
-Try it online: https://jack-the-counter.pages.dev (test build, every ante unlocked).
+<p align="center"><b>Learn to count cards at blackjack and beat the evil dealer.</b></p>
+
+<p align="center">
+  <a href="https://jack-the-counter.pages.dev"><img alt="Play online" src="https://img.shields.io/badge/play-jack--the--counter.pages.dev-fe5f55?style=flat-square"></a>
+  <a href="https://github.com/PennecStv/JackTheCounter/actions/workflows/deploy.yml"><img alt="Deploy status" src="https://img.shields.io/github/actions/workflow/status/PennecStv/JackTheCounter/deploy.yml?branch=main&label=deploy&logo=cloudflare&logoColor=white&style=flat-square"></a>
+  <a href="https://github.com/PennecStv/JackTheCounter/tags"><img alt="Latest version" src="https://img.shields.io/github/v/tag/PennecStv/JackTheCounter?label=version&color=009dff&style=flat-square"></a>
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/github/license/PennecStv/JackTheCounter?color=4bc292&style=flat-square"></a>
+  <br>
+  <img alt="React 19" src="https://img.shields.io/badge/React-19-149eca?logo=react&logoColor=white&style=flat-square">
+  <img alt="Vite 8" src="https://img.shields.io/badge/Vite-8-646cff?logo=vite&logoColor=white&style=flat-square">
+  <img alt="TypeScript 7" src="https://img.shields.io/badge/TypeScript-7-3178c6?logo=typescript&logoColor=white&style=flat-square">
+  <img alt="Tailwind CSS 4" src="https://img.shields.io/badge/Tailwind_CSS-4-06b6d4?logo=tailwindcss&logoColor=white&style=flat-square">
+  <img alt="PWA, works offline" src="https://img.shields.io/badge/PWA-works_offline-5a0fc8?logo=pwa&logoColor=white&style=flat-square">
+</p>
+
+Play the test build online, with every ante unlocked: https://jack-the-counter.pages.dev
 
 Practise card counting across eight antes: ante N deals from an N-deck shoe, a little faster each time.
 Every few rounds the table is swept and you give the running count; from ante 2 you also give the true count.
