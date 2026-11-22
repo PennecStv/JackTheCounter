@@ -1,10 +1,13 @@
-# JackTheCounter
-Application for learning to count cards in BlackJack and beat the evil dealer.
+# Jack the Counter
+Learn to count cards at blackjack and beat the evil dealer.
+
+Try it online: https://jack-the-counter.pages.dev (test build, every ante unlocked).
 
 Practise card counting across eight antes: ante N deals from an N-deck shoe, a little faster each time.
 Every few rounds the table is swept and you give the running count; from ante 2 you also give the true count.
 Three wrong answers end the run, lives left become stars, and clearing an ante unlocks the next.
 
+- Pixel-art cards, dealt one by one with a card sound.
 - Four counts to train: Hi-Lo, KO (running count only, starting at 4 − 4 × decks as in the KO book), Omega II and Zen, each with its own progress.
 - For each count, the menu explains what counting is for and what to bet and play at each count value.
 - Deal speed from ×0.75 to ×3, set from the menu or during a game.
@@ -28,10 +31,24 @@ npm run build    # static site in dist/, with service worker
 npm run staging  # test build with every ante unlocked, served on the local network (port 4173)
 ```
 
+Built with Vite, React, TypeScript and Tailwind CSS. The game engine is in `src/game.ts`, with no React in it.
+
+## Deploy
+
+The test build is hosted on Cloudflare Pages, in the `jack-the-counter` project. After `npx wrangler login`:
+
+```bash
+npx vite build --mode staging   # or `npm run build` for the real game, with antes locked
+npx wrangler pages deploy dist --project-name jack-the-counter --branch main
+```
+
+Any static host over HTTPS works the same way: upload `dist/`.
+
 ## On a phone
 
-The build is a PWA. Deploy `dist/` to any static host over HTTPS, open it on the phone, then
-"Add to Home Screen" (iOS Safari) or "Install app" (Android Chrome). It runs full screen and offline.
+The build is a PWA. Open the site on the phone, then "Add to Home Screen" (iOS Safari) or
+"Install app" (Android Chrome). It runs full screen and offline.
+After a deploy, reload the page twice to get the new version.
 
 ## Credits
 
