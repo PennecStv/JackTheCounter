@@ -53,6 +53,8 @@ const onHashChange = (cb: () => void) => {
 }
 
 const TITLE = 'Jack the Counter'
+// Card backs from Jfred's Pixel Cards (public/cards/backs), the closest hue to each ante's colour.
+const ANTE_BACKS = ['green', 'cyan', 'blue', 'purple', 'pink', 'orange', 'red', 'black']
 
 export default function App() {
   const [settings, setSettings] = useState(loadSettings)
@@ -220,7 +222,7 @@ export default function App() {
               <li key={i} className="ante" style={{ '--ante': ANTE_COLORS[i] } as CSSProperties} data-locked={!unlocked(i) || undefined}>
                 <div className="ante-stack" aria-hidden>
                   {Array.from({ length: decks }, (_, d) => (
-                    <span key={d} className="card-back" style={{ '--d': d } as CSSProperties} />
+                    <img key={d} className="card-back" src={`${import.meta.env.BASE_URL}cards/backs/${ANTE_BACKS[i]}.png`} alt="" style={{ '--d': d } as CSSProperties} />
                   ))}
                 </div>
                 <div className="ante-info">
